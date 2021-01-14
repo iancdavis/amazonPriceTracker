@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer')
 const $ = require('cheerio')
-//const CronJob = require('cron').CronJob
+const CronJob = require('cron').CronJob
 //const nodemailer = require('nodemailer')
 
 const url = 'https://www.amazon.com/Sony-WH-1000XM4-Canceling-Headphones-phone-call/dp/B0863TXGM3/'
@@ -21,13 +21,31 @@ async function checkPrice(page) {
 
     $('#priceblock_ourprice', html).each(function() {
         let dollarPrice = $(this).text()
-        console.log(dollarPrice)
+        //console.log(dollarPrice)
+        //remove dollar sign and convert text to number
+        var currentPrice = Number(dollarPrice.replace(/[^0-9.-]+/g,""))
+
+        if (currentPrice < 400) {
+            console.log('BUY ' + currentPrice)
+        }
     })
 }
 
-async function monitor() {
-    let page = await configureBrowser()
-    await checkPrice(page)
+async function startTracking() {
+    const page = await configureBrowser()
+
+    let job = new CronJob('*/15 * * * * *', function () {
+        checkPrice(page)
+    }, null, true, null, null, true)
+    job.start()
 }
 
-monitor()
+startTracking()
+
+
+// async function monitor() {
+//     let page = await configureBrowser()
+//     await checkPrice(page)
+// }
+
+// monitor()
