@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer')
 const $ = require('cheerio')
 const CronJob = require('cron').CronJob
-//const nodemailer = require('nodemailer')
+const nodemailer = require('nodemailer')
 
 const url = 'https://www.amazon.com/Sony-WH-1000XM4-Canceling-Headphones-phone-call/dp/B0863TXGM3/'
 
@@ -27,6 +27,7 @@ async function checkPrice(page) {
 
         if (currentPrice < 400) {
             console.log('BUY ' + currentPrice)
+            sendNotification(currentPrice)
         }
     })
 }
@@ -38,6 +39,30 @@ async function startTracking() {
         checkPrice(page)
     }, null, true, null, null, true)
     job.start()
+}
+
+async function sendNotification(price) {
+    
+    let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: '*@gmail.com',
+            pass: '*'
+        }
+    })
+
+    let textToSend = 'Price Dropped to ' + price
+    let htmlText = `<a href=\"${url}\">Link</a>`
+
+    let info = await transporter.sendMail({
+        form: '"Price Tracker" <hugebigdog79@gmail.com>',
+        to: "*@gmail.com",
+        subject: 'Price dropped to ' + price,
+        text: textToSend,
+        html: htmlText
+    })
+
+    console.log("Message sent: %s", info.messageId)
 }
 
 startTracking()
